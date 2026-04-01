@@ -1,0 +1,25 @@
+rates:
+  alpha_EMT_mean: 0.80
+  alpha_EMT_sd: 0.20
+  alpha_DMP_mean: 0.60
+  alpha_DMP_sd: 0.18
+  k_G_mean: 0.95
+  k_G_sd: 0.20
+  k_E_mean: 0.72
+  k_E_sd: 0.15
+  k_A_mean: 0.68
+  k_A_sd: 0.15
+
+noise:
+  sigma_C_mean: 0.08
+  sigma_C_sd: 0.03
+  sigma_D_mean: 0.07
+  sigma_D_sd: 0.03
+  sigma_G_mean: 0.05
+  sigma_G_sd: 0.02
+
+phenotype:
+  threshold_mean: 0.70
+  threshold_sd: 0.08
+  slope_mean: 8.0
+  slope_sd: 2.0

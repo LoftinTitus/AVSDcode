@@ -1,0 +1,7 @@
+.venv/
+.pytest_cache/
+.julia_depot/
+Manifest.toml
+__pycache__/
+*.pyc
+*.egg-info/
