@@ -245,6 +245,12 @@ Outputs:
   - Euler–Maruyama (baseline)
   - stochastic Runge–Kutta (preferred)
 
+Current Julia implementation:
+- `bdf1_stiff(...)` for the stiff deterministic phase
+- `euler_maruyama(...)` as the baseline SDE solver
+- `stochastic_heun(...)` as the preferred higher-order stochastic solver
+- `solve_embryo(...; solver = :bdf1 | :euler_maruyama | :stochastic_heun)` to select the integration method
+
 ---
 
 ## Calibration Targets
@@ -257,6 +263,13 @@ Model should reproduce:
 - Correct developmental timing
 - Realistic trajectories
 - Physiological shear stress ranges
+
+Current Julia calibration assumptions:
+- Euploid prevalence target: `0-5%`
+- Trisomy 21 prevalence target: `15-33%`
+- Mean closure-time target window: `1.5-3.2` developmental days
+- Mean terminal shear target window: `0.5-4.0` in current model stress units
+- Mean terminal gap target: `<= 0.35`
 
 ---
 
@@ -295,6 +308,28 @@ This repository is implemented in Julia and follows the same conceptual split:
 1. `julia --project=.`
 2. `using Pkg; Pkg.test()`
 3. `include("examples/basic_run.jl")`
+4. `include("examples/calibration_run.jl")`
+
+##  Calibration Workflow
+
+- `default_calibration_targets()` builds the target set used for fitting and validation.
+- `calibration_summary(params; ...)` evaluates euploid and trisomy 21 cohorts against those targets.
+- `fit_parameters(; ...)` performs a prior-guided random search over selected rate parameters.
+- `validate_parameters(params; ...)` reruns the fitted model across replicate cohorts and reports pass rates by target.
+- `parameter_sweep(:k_G; ...)` gives one-parameter response curves.
+- `global_sensitivity([:alpha_EMT, :k_G]; ...)` returns local objective slopes, global effect sizes, and sweep traces.
+
+##  Reporting And Visualization
+
+- `format_summary_table(summary)` renders a terminal-friendly cohort summary.
+- `write_population_csv(path, results)` exports embryo-level outputs for downstream analysis.
+- `write_summary_csv(path, summary)` exports cohort metrics.
+- `write_calibration_history_csv(path, fit)` exports the fitting trace.
+- `write_markdown_report(path; ...)` builds a lightweight report from summaries, calibration, validation, and sensitivity results.
+- `write_trajectory_svg(path, trajectories; variable = :G)` draws dependency-light SVG trajectory plots.
+- `write_calibration_history_svg(path, fit)` plots objective improvement across fitting iterations.
+- `write_sensitivity_svg(path, sensitivity)` plots ranked global sensitivity effects.
+- `include("examples/reporting_run.jl")` produces a simple example export run.
 
 ---
 

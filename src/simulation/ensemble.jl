@@ -4,6 +4,7 @@ function simulate_population(
     initial_state::PhysicalState{T} = default_initial_state(),
     seed::Integer = 42,
     trisomy_fraction::Real = 0.0,
+    solver::Symbol = :stochastic_heun,
 ) where {T<:Real}
     rng = MersenneTwister(seed)
     results = Vector{EmbryoResult{T}}(undef, n_embryos)
@@ -15,6 +16,7 @@ function simulate_population(
             params = params,
             initial_state = initial_state,
             trisomy21 = trisomy21,
+            solver = solver,
         )
     end
 
