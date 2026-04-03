@@ -19,10 +19,9 @@ include("analysis/phenotype.jl")
 include("analysis/metrics.jl")
 include("analysis/calibration.jl")
 include("analysis/sensitivity.jl")
+include("config/config.jl")
 include("analysis/output.jl")
 include("analysis/visualization.jl")
-
-include("config/config.jl")
 
 export ActivationParameters
 export CalibrationEvaluation
@@ -33,8 +32,11 @@ export GeneticParameters
 export GenotypeSample
 export HemodynamicsParameters
 export ModelParameters
+export MultiChainCalibration
 export PhenotypeParameters
 export PhysicalState
+export PosteriorSummary
+export ResearchRunConfig
 export SensitivityResult
 export TimingWindow
 export Trajectory
@@ -56,14 +58,18 @@ export euler_maruyama
 export excess_over_threshold
 export fit_parameters
 export format_calibration_report
+export format_posterior_summary
 export format_summary_table
 export format_validation_report
+export generate_results_bundle
 export global_sensitivity
 export hill_activation
 export late_penalty
+export load_calibration_targets
 export load_parameters
 export load_initial_state
 export load_priors
+export load_research_run_config
 export load_yaml_like
 export local_sensitivity
 export logistic
@@ -74,6 +80,7 @@ export phenotype_label
 export phenotype_probability
 export phenotype_scores
 export physical_state
+export posterior_summary
 export prevalence
 export sample_genotype
 export sample_parameter_candidate
@@ -87,11 +94,16 @@ export timing_window
 export trajectory_closes
 export transformed_state
 export terminal_shear
+export run_calibration_chains
+export run_research_pipeline
 export validate_parameters
 export write_calibration_history_csv
 export write_calibration_history_svg
 export write_markdown_report
 export write_population_csv
+export write_cohort_comparison_svg
+export write_posterior_summary_csv
+export write_posterior_trace_svg
 export write_sensitivity_svg
 export write_summary_csv
 export write_trajectory_svg

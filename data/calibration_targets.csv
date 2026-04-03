@@ -1,0 +1,6 @@
+metric,cohort,lower,upper,weight
+prevalence,euploid,0.00,0.05,3.0
+prevalence,trisomy21,0.15,0.33,4.0
+closure_time,both,1.50,3.20,1.5
+terminal_shear,both,0.50,4.00,1.0
+gap,both,0.00,0.35,1.5

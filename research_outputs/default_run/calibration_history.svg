@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420">
+<rect x="0" y="0" width="900" height="420" fill="#ffffff"/>
+<text x="450" y="26" text-anchor="middle" font-family="monospace" font-size="18">Calibration Score History</text>
+<line x1="70.0" y1="375.0" x2="880.0" y2="375.0" stroke="#444" stroke-width="1.5"/>
+<line x1="70.0" y1="45.0" x2="70.0" y2="375.0" stroke="#444" stroke-width="1.5"/>
+<polyline fill="none" stroke="#1f77b4" stroke-width="2" points="70.0,NaN 103.75,375.0 137.5,375.0 171.25,375.0 205.0,375.0 238.75,375.0 272.5,375.0 306.25,375.0 340.0,375.0 373.75,375.0 407.5,375.0 441.25,375.0 475.0,375.0 508.75,375.0 542.5,375.0 576.25,375.0 610.0,375.0 643.75,375.0 677.5,375.0 711.25,375.0 745.0,375.0 778.75,375.0 812.5,375.0 846.25,375.0 880.0,375.0"/>
+</svg>

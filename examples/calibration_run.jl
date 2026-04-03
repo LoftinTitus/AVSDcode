@@ -11,6 +11,7 @@ fit = fit_parameters(
     n_embryos = 32,
     seed = 2026,
 )
+posterior = posterior_summary(fit; burn_in = 2)
 
 validation = validate_parameters(
     fit.best_parameters;
@@ -30,6 +31,9 @@ sensitivity = global_sensitivity(
 
 println("Best calibration score:")
 println(fit.best_evaluation.score)
+
+println("\nPosterior summary:")
+println(format_posterior_summary(posterior))
 
 println("\nValidation mean score:")
 println(validation.mean_score)

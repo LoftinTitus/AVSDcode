@@ -25,10 +25,15 @@ using AVSDModel
 
     @testset "Config loader returns a valid parameter set" begin
         params = load_parameters()
+        targets = load_calibration_targets()
+        run_config = load_research_run_config()
         @test params.T == 3.5
         @test params.dt == 0.01
         @test haskey(params.rates, :alpha_EMT)
         @test params.genetics.latent_dim == 2
+        @test targets.trisomy21_prevalence == (0.15, 0.33)
+        @test run_config.n_chains == 4
+        @test :threshold in run_config.parameter_names
     end
 
     @testset "Single embryo simulation stays in bounds" begin
@@ -80,6 +85,21 @@ using AVSDModel
         @test all(result -> result.solver == :euler_maruyama, population)
     end
 
+    @testset "Stratified population sampling improves cohort coverage" begin
+        params = default_parameters()
+        population = simulate_population(
+            12;
+            params = params,
+            seed = 321,
+            trisomy_fraction = 0.25,
+            sample_strategy = :stratified,
+        )
+
+        @test count(result -> result.genotype.trisomy21, population) == 3
+        @test all(length(result.genotype.latent_axes) == params.genetics.latent_dim for result in population)
+        @test abs(sum(result.genotype.latent_axes[1] for result in population) / length(population)) < params.genetics.latent_sd
+    end
+
     @testset "Population summaries and sensitivity run" begin
         params = default_parameters()
         results = simulate_population(12; params = params, seed = 21, trisomy_fraction = 0.25)
@@ -108,6 +128,17 @@ using AVSDModel
             n_embryos = 8,
             seed = 12,
         )
+        posterior = posterior_summary(fit; burn_in = 1)
+        multichain = run_calibration_chains(
+            params = params,
+            targets = targets,
+            parameter_names = [:alpha_EMT, :alpha_DMP, :k_G],
+            n_candidates = 2,
+            n_embryos = 8,
+            n_chains = 2,
+            seed = 1012,
+        )
+        multichain_posterior = posterior_summary(multichain; burn_in = 1)
         validation = validate_parameters(
             fit.best_parameters;
             targets = targets,
@@ -136,6 +167,18 @@ using AVSDModel
         @test haskey(evaluation.penalties, :trisomy21_prevalence)
         @test length(fit.history) == 4
         @test fit.best_evaluation.score >= 0.0
+        @test haskey(fit.history[1], :log_prior)
+        @test haskey(fit.history[1], :log_posterior)
+        @test haskey(fit.history[1], :accepted)
+        @test haskey(fit.history[1], :parameter_values)
+        @test 0.0 <= posterior.acceptance_rate <= 1.0
+        @test posterior.n_samples == 3
+        @test haskey(posterior.posterior_mean, :alpha_EMT)
+        @test haskey(posterior.posterior_interval, :alpha_EMT)
+        @test haskey(posterior.map_parameters, :k_G)
+        @test length(multichain.chains) == 2
+        @test haskey(multichain_posterior.rhat, :alpha_EMT)
+        @test haskey(multichain_posterior.rhat, :score)
         @test length(validation.replicate_scores) == 2
         @test haskey(validation.pass_rates, :gap)
         @test length(sweep) == 3
@@ -156,6 +199,15 @@ using AVSDModel
             n_embryos = 6,
             seed = 223,
         )
+        posterior = posterior_summary(fit; burn_in = 1)
+        multichain = run_calibration_chains(
+            params = params,
+            parameter_names = [:alpha_EMT, :k_G],
+            n_candidates = 2,
+            n_embryos = 6,
+            n_chains = 2,
+            seed = 323,
+        )
         validation = validate_parameters(fit.best_parameters; n_replicates = 2, n_embryos = 6, seed = 224)
         sensitivity = global_sensitivity(
             [:alpha_EMT, :k_G];
@@ -173,26 +225,80 @@ using AVSDModel
                 joinpath(dir, "report.md");
                 summary = summary,
                 calibration = fit.best_evaluation,
+                posterior = posterior,
                 validation = validation,
                 sensitivity = sensitivity,
             )
             traj_svg = write_trajectory_svg(joinpath(dir, "gap.svg"), [result.trajectory for result in results]; variable = :G)
             hist_svg = write_calibration_history_svg(joinpath(dir, "history.svg"), fit)
             sens_svg = write_sensitivity_svg(joinpath(dir, "sensitivity.svg"), sensitivity)
+            posterior_csv = write_posterior_summary_csv(joinpath(dir, "posterior.csv"), posterior)
+            comparison_svg = write_cohort_comparison_svg(
+                joinpath(dir, "cohorts.svg"),
+                Dict(:euploid => summary, :mixed => summary, :trisomy21 => summary),
+            )
+            trace_svg = write_posterior_trace_svg(joinpath(dir, "trace.svg"), multichain; parameter_names = [:alpha_EMT, :k_G])
+            bundle = generate_results_bundle(
+                joinpath(dir, "bundle");
+                params = params,
+                initial_state = default_initial_state(),
+                population_size = 6,
+                calibration_candidates = 2,
+                validation_replicates = 2,
+                burn_in = 1,
+                n_chains = 2,
+                seed = 500,
+            )
+            cfg = ResearchRunConfig(
+                joinpath(dir, "config_bundle"),
+                joinpath(dirname(pwd()), "data", "calibration_targets.csv"),
+                6,
+                2,
+                2,
+                2,
+                1,
+                700,
+                0.25,
+                :stochastic_heun,
+                :stratified,
+                [:alpha_EMT, :k_G],
+                [:alpha_EMT, :k_G],
+                [:alpha_EMT, :k_G],
+            )
+            config_bundle = run_research_pipeline(cfg; params = params, initial_state = default_initial_state())
 
             @test isfile(pop_csv)
             @test isfile(sum_csv)
             @test isfile(hist_csv)
+            @test isfile(posterior_csv)
             @test isfile(report_md)
             @test isfile(traj_svg)
             @test isfile(hist_svg)
             @test isfile(sens_svg)
+            @test isfile(comparison_svg)
+            @test isfile(trace_svg)
             @test occursin("embryo_id", read(pop_csv, String))
             @test occursin("baseline,prevalence", read(sum_csv, String))
+            @test occursin("log_posterior", read(hist_csv, String))
+            @test occursin("lower_credible", read(posterior_csv, String))
+            @test occursin("MAP Parameters", format_posterior_summary(posterior))
+            @test occursin("R-hat", format_posterior_summary(posterior_summary(multichain; burn_in = 1)))
+            @test occursin("Posterior Summary", read(report_md, String))
             @test occursin("# AVSD Analysis Report", read(report_md, String))
             @test occursin("<svg", read(traj_svg, String))
             @test occursin("<svg", read(hist_svg, String))
             @test occursin("<svg", read(sens_svg, String))
+            @test occursin("<svg", read(comparison_svg, String))
+            @test occursin("<svg", read(trace_svg, String))
+            @test haskey(bundle, :report_md)
+            @test haskey(bundle, :gap_trajectories_svg)
+            @test haskey(bundle, :cohort_comparison_svg)
+            @test haskey(bundle, :posterior_trace_svg)
+            @test isfile(bundle[:report_md])
+            @test isfile(bundle[:posterior_summary_md])
+            @test isfile(bundle[:run_manifest])
+            @test occursin("sample_strategy=", read(bundle[:run_manifest], String))
+            @test isfile(config_bundle[:report_md])
         end
     end
 end

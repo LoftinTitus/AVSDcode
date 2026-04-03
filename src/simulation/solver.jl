@@ -30,13 +30,14 @@ function solve_embryo(
     params::ModelParameters{T} = default_parameters(),
     initial_state::PhysicalState{T} = default_initial_state(),
     trisomy21::Bool = false,
+    genotype::Union{Nothing,GenotypeSample{T}} = nothing,
     solver::Symbol = :stochastic_heun,
 ) where {T<:Real}
-    genotype = sample_genotype(rng, params.genetics; trisomy21 = trisomy21)
-    sampled_params, sampled_rates = apply_genotype(rng, params, genotype)
+    genotype_sample = isnothing(genotype) ? sample_genotype(rng, params.genetics; trisomy21 = trisomy21) : genotype
+    sampled_params, sampled_rates = apply_genotype(rng, params, genotype_sample)
     trajectory = simulate_trajectory(rng, initial_state, sampled_params; solver = solver)
     final_state = trajectory.states[end]
     scores = phenotype_scores(final_state, sampled_params)
     phenotype = phenotype_label(final_state, sampled_params)
-    return EmbryoResult(trajectory, sampled_params, sampled_rates, genotype, solver, scores, phenotype)
+    return EmbryoResult(trajectory, sampled_params, sampled_rates, genotype_sample, solver, scores, phenotype)
 end
