@@ -1,0 +1,12 @@
+label,metric,value
+mixed,n_embryos,96.0
+mixed,prevalence,0.0625
+mixed,closure_fraction,0.11458333333333333
+mixed,mean_closure_time,3.4565625000000004
+mixed,mean_gap,0.6625390471091671
+mixed,std_gap,1.3203737861724867
+mixed,mean_linear_score,0.7995175348603323
+mixed,mean_nonlinear_score,0.6856972551697282
+mixed,mean_probability,0.2576725942586903
+mixed,mean_terminal_shear,1.235614937965842
+mixed,mean_peak_shear,1.3036123597796785

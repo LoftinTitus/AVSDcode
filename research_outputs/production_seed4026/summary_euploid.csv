@@ -1,0 +1,12 @@
+label,metric,value
+euploid,n_embryos,96.0
+euploid,prevalence,0.052083333333333336
+euploid,closure_fraction,0.09375
+euploid,mean_closure_time,3.464166666666667
+euploid,mean_gap,0.6511884883862499
+euploid,std_gap,1.3320128643130027
+euploid,mean_linear_score,0.8466229334674816
+euploid,mean_nonlinear_score,0.7167553518983661
+euploid,mean_probability,0.24818986888367234
+euploid,mean_terminal_shear,1.2465873588433336
+euploid,mean_peak_shear,1.3180715005718227

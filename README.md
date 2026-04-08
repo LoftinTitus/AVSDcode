@@ -196,11 +196,11 @@ S_nonlin =
 
 ### Threshold Rule
 
-Y = 1 if S(T) ≥ τ else 0
+Y = 1 if S(T) ≤ τ else 0
 
 Probabilistic version:
 
-P(Y=1) = 1 / (1 + exp(-k * (S - τ)))
+P(Y=1) = 1 / (1 + exp(-k * (τ - S)))
 
 ---
 

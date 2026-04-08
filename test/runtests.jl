@@ -13,6 +13,10 @@ using AVSDModel
         @test isapprox(recovered.G, state.G; atol = 1e-10)
         @test isapprox(recovered.E, state.E; atol = 1e-10)
         @test isapprox(recovered.A, state.A; atol = 1e-10)
+        bounded = physical_state(TransformedState(Inf, -Inf, NaN, Inf, -Inf))
+        @test all(isfinite, [bounded.C, bounded.D, bounded.G, bounded.E, bounded.A])
+        @test 0.0 < bounded.E < 1.0
+        @test 0.0 < bounded.A < 1.0
     end
 
     @testset "Supporting functions behave sensibly" begin
@@ -27,6 +31,7 @@ using AVSDModel
         params = load_parameters()
         targets = load_calibration_targets()
         run_config = load_research_run_config()
+        production_config = load_research_run_config(joinpath(pwd(), "config", "research_run_production.yaml"))
         @test params.T == 3.5
         @test params.dt == 0.01
         @test haskey(params.rates, :alpha_EMT)
@@ -34,6 +39,10 @@ using AVSDModel
         @test targets.trisomy21_prevalence == (0.15, 0.33)
         @test run_config.n_chains == 4
         @test :threshold in run_config.parameter_names
+        @test run_config.proposal_scale > 0.0
+        @test run_config.refinement_candidates >= 1
+        @test production_config.calibration_candidates > run_config.calibration_candidates
+        @test production_config.burn_in > run_config.burn_in
     end
 
     @testset "Single embryo simulation stays in bounds" begin
@@ -115,11 +124,37 @@ using AVSDModel
         @test haskey(sens, :k_G)
     end
 
+    @testset "Lower structural scores map to AVSD phenotype risk" begin
+        params = default_parameters()
+        robust_state = PhysicalState(1.0, 0.8, 0.1, 0.9, 0.9)
+        weak_state = PhysicalState(0.1, 0.1, 1.0, 0.1, 0.1)
+
+        @test phenotype_scores(weak_state, params).linear < phenotype_scores(robust_state, params).linear
+        @test phenotype_probability(weak_state, params) > phenotype_probability(robust_state, params)
+        @test phenotype_label(weak_state, params)
+        @test !phenotype_label(robust_state, params)
+    end
+
     @testset "Calibration, fitting, validation, and global sensitivity run" begin
         params = default_parameters()
         targets = default_calibration_targets()
+        panel = AVSDModel.build_calibration_panel(8; params = params, seed = 5)
 
         evaluation = calibration_summary(params; targets = targets, n_embryos = 8, seed = 5)
+        fixed_panel_eval_a = calibration_summary(
+            params;
+            targets = targets,
+            n_embryos = 8,
+            seed = 5,
+            calibration_panel = panel,
+        )
+        fixed_panel_eval_b = calibration_summary(
+            params;
+            targets = targets,
+            n_embryos = 8,
+            seed = 500,
+            calibration_panel = panel,
+        )
         fit = fit_parameters(
             params = params,
             targets = targets,
@@ -127,6 +162,8 @@ using AVSDModel
             n_candidates = 3,
             n_embryos = 8,
             seed = 12,
+            refinement_rounds = 1,
+            refinement_candidates = 2,
         )
         posterior = posterior_summary(fit; burn_in = 1)
         multichain = run_calibration_chains(
@@ -164,15 +201,18 @@ using AVSDModel
         )
 
         @test evaluation.score >= 0.0
+        @test isfinite(evaluation.score)
+        @test fixed_panel_eval_a.score == fixed_panel_eval_b.score
         @test haskey(evaluation.penalties, :trisomy21_prevalence)
-        @test length(fit.history) == 4
+        @test length(fit.history) == 6
         @test fit.best_evaluation.score >= 0.0
+        @test isfinite(fit.best_evaluation.score)
         @test haskey(fit.history[1], :log_prior)
         @test haskey(fit.history[1], :log_posterior)
         @test haskey(fit.history[1], :accepted)
         @test haskey(fit.history[1], :parameter_values)
         @test 0.0 <= posterior.acceptance_rate <= 1.0
-        @test posterior.n_samples == 3
+        @test posterior.n_samples == 5
         @test haskey(posterior.posterior_mean, :alpha_EMT)
         @test haskey(posterior.posterior_interval, :alpha_EMT)
         @test haskey(posterior.map_parameters, :k_G)
@@ -244,6 +284,8 @@ using AVSDModel
                 initial_state = default_initial_state(),
                 population_size = 6,
                 calibration_candidates = 2,
+                refinement_rounds = 1,
+                refinement_candidates = 1,
                 validation_replicates = 2,
                 burn_in = 1,
                 n_chains = 2,
@@ -251,9 +293,13 @@ using AVSDModel
             )
             cfg = ResearchRunConfig(
                 joinpath(dir, "config_bundle"),
-                joinpath(dirname(pwd()), "data", "calibration_targets.csv"),
+                joinpath(pwd(), "data", "calibration_targets.csv"),
                 6,
                 2,
+                0.2,
+                0.15,
+                1,
+                1,
                 2,
                 2,
                 1,

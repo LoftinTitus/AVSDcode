@@ -6,12 +6,18 @@ function local_sensitivity(
     seed::Integer = 42,
     initial_state::PhysicalState = default_initial_state(),
     solver::Symbol = :stochastic_heun,
+    sample_strategy::Symbol = :stratified,
 )
-    baseline_results = simulate_population(
+    population_panel = build_population_panel(
         n_embryos;
         params = params,
-        initial_state = initial_state,
         seed = seed,
+        sample_strategy = sample_strategy,
+    )
+    baseline_results = simulate_population(
+        population_panel;
+        params = params,
+        initial_state = initial_state,
         solver = solver,
     )
     baseline_prevalence = prevalence(baseline_results)
@@ -26,10 +32,9 @@ function local_sensitivity(
         perturbed_params = with_rates(params; rates = perturbed_rates)
 
         perturbed_results = simulate_population(
-            n_embryos;
+            population_panel;
             params = perturbed_params,
             initial_state = initial_state,
-            seed = seed + idx,
             solver = solver,
         )
 
@@ -56,10 +61,18 @@ function parameter_sweep(
     seed::Integer = 42,
     initial_state::Union{Nothing,PhysicalState{T}} = nothing,
     solver::Symbol = :stochastic_heun,
+    sample_strategy::Symbol = :stratified,
+    calibration_panel::Union{Nothing,CalibrationPanel{T}} = nothing,
 ) where {T<:Real}
     targets = isnothing(targets) ? default_calibration_targets(; T = T) : targets
     factors = isnothing(factors) ? T[0.8, 0.9, 1.0, 1.1, 1.2] : factors
     initial_state = isnothing(initial_state) ? default_initial_state() : initial_state
+    panel = isnothing(calibration_panel) ? build_calibration_panel(
+        n_embryos;
+        params = params,
+        seed = seed,
+        sample_strategy = sample_strategy,
+    ) : calibration_panel
 
     haskey(params.rates, parameter_name) || error("Unknown rate $(parameter_name)")
     sweep_results = Vector{NamedTuple{(:factor, :score, :euploid_prevalence, :trisomy21_prevalence),Tuple{T,T,T,T}}}()
@@ -74,6 +87,8 @@ function parameter_sweep(
             seed = seed + idx,
             initial_state = initial_state,
             solver = solver,
+            sample_strategy = sample_strategy,
+            calibration_panel = panel,
         )
         push!(sweep_results, (
             factor = factor,
@@ -96,10 +111,17 @@ function global_sensitivity(
     seed::Integer = 42,
     initial_state::Union{Nothing,PhysicalState{T}} = nothing,
     solver::Symbol = :stochastic_heun,
+    sample_strategy::Symbol = :stratified,
 ) where {T<:Real}
     targets = isnothing(targets) ? default_calibration_targets(; T = T) : targets
     sweep_factors = isnothing(sweep_factors) ? T[0.8, 0.9, 1.0, 1.1, 1.2] : sweep_factors
     initial_state = isnothing(initial_state) ? default_initial_state() : initial_state
+    calibration_panel = build_calibration_panel(
+        n_embryos;
+        params = params,
+        seed = seed,
+        sample_strategy = sample_strategy,
+    )
 
     baseline_evaluation = calibration_summary(
         params;
@@ -108,6 +130,8 @@ function global_sensitivity(
         seed = seed,
         initial_state = initial_state,
         solver = solver,
+        sample_strategy = sample_strategy,
+        calibration_panel = calibration_panel,
     )
 
     local_effects = Dict{Symbol,T}()
@@ -129,6 +153,8 @@ function global_sensitivity(
             seed = seed + 100 * idx,
             initial_state = initial_state,
             solver = solver,
+            sample_strategy = sample_strategy,
+            calibration_panel = calibration_panel,
         )
         minus_eval = calibration_summary(
             with_rates(params; rates = minus_rates);
@@ -137,6 +163,8 @@ function global_sensitivity(
             seed = seed + 100 * idx + 1,
             initial_state = initial_state,
             solver = solver,
+            sample_strategy = sample_strategy,
+            calibration_panel = calibration_panel,
         )
 
         scale = max(params.rates[parameter_name] * perturbation, T(1.0e-6))
@@ -156,6 +184,8 @@ function global_sensitivity(
             seed = seed + 1000 * idx,
             initial_state = initial_state,
             solver = solver,
+            sample_strategy = sample_strategy,
+            calibration_panel = calibration_panel,
         )
     end
 

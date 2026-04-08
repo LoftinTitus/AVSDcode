@@ -2,10 +2,14 @@ run:
   output_dir: research_outputs/default_run
   calibration_targets_path: data/calibration_targets.csv
   population_size: 96
-  calibration_candidates: 24
+  calibration_candidates: 64
+  proposal_scale: 0.10
+  prior_mix: 0.05
+  refinement_rounds: 3
+  refinement_candidates: 24
   validation_replicates: 5
   n_chains: 4
-  burn_in: 8
+  burn_in: 32
   seed: 2026
   trisomy_fraction: 0.25
   solver: stochastic_heun

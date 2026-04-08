@@ -137,24 +137,29 @@ function calibration_summary(
     seed::Integer = 42,
     initial_state::Union{Nothing,PhysicalState{T}} = nothing,
     solver::Symbol = :stochastic_heun,
+    sample_strategy::Symbol = :stratified,
+    calibration_panel::Union{Nothing,CalibrationPanel{T}} = nothing,
 ) where {T<:Real}
     targets = isnothing(targets) ? default_calibration_targets(; T = T) : targets
     initial_state = isnothing(initial_state) ? default_initial_state() : initial_state
 
-    euploid_results = simulate_population(
+    panel = isnothing(calibration_panel) ? build_calibration_panel(
         n_embryos;
         params = params,
-        initial_state = initial_state,
         seed = seed,
-        trisomy_fraction = 0.0,
+        sample_strategy = sample_strategy,
+    ) : calibration_panel
+
+    euploid_results = simulate_population(
+        panel.euploid;
+        params = params,
+        initial_state = initial_state,
         solver = solver,
     )
     trisomy21_results = simulate_population(
-        n_embryos;
+        panel.trisomy21;
         params = params,
         initial_state = initial_state,
-        seed = seed + 10_000,
-        trisomy_fraction = 1.0,
         solver = solver,
     )
 
@@ -296,13 +301,23 @@ function fit_parameters(
     seed::Integer = 42,
     initial_state::Union{Nothing,PhysicalState{T}} = nothing,
     solver::Symbol = :stochastic_heun,
+    sample_strategy::Symbol = :stratified,
     proposal_scale::Real = 0.20,
     prior_mix::Real = 0.15,
+    refinement_rounds::Integer = 0,
+    refinement_candidates::Integer = max(cld(Int(n_candidates), 2), 1),
+    refinement_scale_factor::Real = 0.5,
     penalty_scale::Real = 1.0,
 ) where {T<:Real}
     targets = isnothing(targets) ? default_calibration_targets(; T = T) : targets
     parameter_names = isnothing(parameter_names) ? collect(keys(params.rates)) : collect(parameter_names)
     initial_state = isnothing(initial_state) ? default_initial_state() : initial_state
+    calibration_panel = build_calibration_panel(
+        n_embryos;
+        params = params,
+        seed = seed,
+        sample_strategy = sample_strategy,
+    )
 
     rng = MersenneTwister(seed)
     history = Vector{Dict{Symbol,Any}}()
@@ -316,12 +331,16 @@ function fit_parameters(
         seed = seed,
         initial_state = initial_state,
         solver = solver,
+        sample_strategy = sample_strategy,
+        calibration_panel = calibration_panel,
     )
     current_log_prior = _log_prior_density(current_values, params, parameter_names, priors)
     current_log_posterior = _log_posterior(current_eval, current_log_prior; penalty_scale = penalty_scale)
 
     best_params = current_params
     best_eval = current_eval
+    best_values = copy(current_values)
+    best_log_prior = current_log_prior
     best_log_posterior = current_log_posterior
 
     push!(history, Dict(
@@ -335,61 +354,90 @@ function fit_parameters(
         :penalties => copy(current_eval.penalties),
     ))
 
-    for iteration in 1:n_candidates
-        proposed_values = copy(current_values)
+    function run_walk!(
+        iteration_offset::Int,
+        stage_candidates::Int,
+        stage_proposal_scale::Real,
+        stage_prior_mix::Real,
+    )
+        for stage_iteration in 1:stage_candidates
+            iteration = iteration_offset + stage_iteration
+            proposed_values = copy(current_values)
 
-        for name in parameter_names
-            current_value = max(proposed_values[name], 1.0e-6)
-            mean_value, sd_value = _prior_statistics(priors, params, name)
-            log_step = randn(rng) * proposal_scale
-            proposed_value = current_value * exp(log_step)
+            for name in parameter_names
+                current_value = max(proposed_values[name], 1.0e-6)
+                mean_value, sd_value = _prior_statistics(priors, params, name)
+                log_step = randn(rng) * stage_proposal_scale
+                proposed_value = current_value * exp(log_step)
 
-            if prior_mix > 0
-                proposed_value = (1 - prior_mix) * proposed_value + prior_mix * max(1.0e-6, mean_value + randn(rng) * sd_value)
+                if stage_prior_mix > 0
+                    proposed_value = (1 - stage_prior_mix) * proposed_value + stage_prior_mix * max(1.0e-6, mean_value + randn(rng) * sd_value)
+                end
+
+                proposed_values[name] = max(1.0e-6, proposed_value)
             end
 
-            proposed_values[name] = max(1.0e-6, proposed_value)
+            proposed_params = _with_parameter_values(params, proposed_values)
+            proposed_eval = calibration_summary(
+                proposed_params;
+                targets = targets,
+                n_embryos = n_embryos,
+                seed = seed + iteration,
+                initial_state = initial_state,
+                solver = solver,
+                sample_strategy = sample_strategy,
+                calibration_panel = calibration_panel,
+            )
+            proposed_log_prior = _log_prior_density(proposed_values, params, parameter_names, priors)
+            proposed_log_posterior = _log_posterior(proposed_eval, proposed_log_prior; penalty_scale = penalty_scale)
+
+            log_acceptance = proposed_log_posterior - current_log_posterior
+            accepted = log(rand(rng)) < min(0.0, log_acceptance)
+
+            if accepted
+                current_values = proposed_values
+                current_params = proposed_params
+                current_eval = proposed_eval
+                current_log_prior = proposed_log_prior
+                current_log_posterior = proposed_log_posterior
+            end
+
+            if proposed_log_posterior > best_log_posterior
+                best_values = copy(proposed_values)
+                best_params = proposed_params
+                best_eval = proposed_eval
+                best_log_prior = proposed_log_prior
+                best_log_posterior = proposed_log_posterior
+            end
+
+            push!(history, Dict(
+                :iteration => iteration,
+                :score => current_eval.score,
+                :log_prior => current_log_prior,
+                :log_posterior => current_log_posterior,
+                :accepted => accepted,
+                :parameter_values => copy(current_values),
+                :rates => copy(current_params.rates),
+                :penalties => copy(current_eval.penalties),
+            ))
         end
 
-        proposed_params = _with_parameter_values(params, proposed_values)
-        proposed_eval = calibration_summary(
-            proposed_params;
-            targets = targets,
-            n_embryos = n_embryos,
-            seed = seed + iteration,
-            initial_state = initial_state,
-            solver = solver,
-        )
-        proposed_log_prior = _log_prior_density(proposed_values, params, parameter_names, priors)
-        proposed_log_posterior = _log_posterior(proposed_eval, proposed_log_prior; penalty_scale = penalty_scale)
+        return iteration_offset + stage_candidates
+    end
 
-        log_acceptance = proposed_log_posterior - current_log_posterior
-        accepted = log(rand(rng)) < min(0.0, log_acceptance)
+    last_iteration = run_walk!(0, Int(n_candidates), proposal_scale, prior_mix)
 
-        if accepted
-            current_values = proposed_values
-            current_params = proposed_params
-            current_eval = proposed_eval
-            current_log_prior = proposed_log_prior
-            current_log_posterior = proposed_log_posterior
-        end
+    refined_candidates = max(Int(refinement_candidates), 1)
+    for refinement_round in 1:Int(refinement_rounds)
+        current_values = copy(best_values)
+        current_params = best_params
+        current_eval = best_eval
+        current_log_prior = best_log_prior
+        current_log_posterior = best_log_posterior
 
-        if proposed_log_posterior > best_log_posterior
-            best_params = proposed_params
-            best_eval = proposed_eval
-            best_log_posterior = proposed_log_posterior
-        end
-
-        push!(history, Dict(
-            :iteration => iteration,
-            :score => current_eval.score,
-            :log_prior => current_log_prior,
-            :log_posterior => current_log_posterior,
-            :accepted => accepted,
-            :parameter_values => copy(current_values),
-            :rates => copy(current_params.rates),
-            :penalties => copy(current_eval.penalties),
-        ))
+        stage_scale = max(float(proposal_scale) * refinement_scale_factor^refinement_round, 1.0e-3)
+        stage_prior_mix = max(float(prior_mix) * refinement_scale_factor^refinement_round, 0.0)
+        last_iteration = run_walk!(last_iteration, refined_candidates, stage_scale, stage_prior_mix)
     end
 
     return CalibrationResult(best_params, best_eval, history)
@@ -585,6 +633,7 @@ function validate_parameters(
     seed::Integer = 42,
     initial_state::Union{Nothing,PhysicalState{T}} = nothing,
     solver::Symbol = :stochastic_heun,
+    sample_strategy::Symbol = :stratified,
 ) where {T<:Real}
     targets = isnothing(targets) ? default_calibration_targets(; T = T) : targets
     initial_state = isnothing(initial_state) ? default_initial_state() : initial_state
@@ -599,6 +648,7 @@ function validate_parameters(
             seed = seed + 1000 * replicate,
             initial_state = initial_state,
             solver = solver,
+            sample_strategy = sample_strategy,
         )
     end
 

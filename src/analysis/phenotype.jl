@@ -15,7 +15,7 @@ function phenotype_scores(state::PhysicalState, params::ModelParameters)
         max(state.A, STATE_EPS)^params.phenotype.w_A
     )
 
-    probability = logistic(params.phenotype.slope * (linear - params.phenotype.threshold))
+    probability = logistic(params.phenotype.slope * (params.phenotype.threshold - linear))
 
     return (
         linear = linear,
@@ -28,11 +28,11 @@ end
 function phenotype_probability(state::PhysicalState, params::ModelParameters; model::Symbol = :linear)
     scores = phenotype_scores(state, params)
     score = model == :nonlinear ? scores.nonlinear : scores.linear
-    return logistic(params.phenotype.slope * (score - params.phenotype.threshold))
+    return logistic(params.phenotype.slope * (params.phenotype.threshold - score))
 end
 
 function phenotype_label(state::PhysicalState, params::ModelParameters; model::Symbol = :linear)
     scores = phenotype_scores(state, params)
     score = model == :nonlinear ? scores.nonlinear : scores.linear
-    return score >= params.phenotype.threshold
+    return score <= params.phenotype.threshold
 end

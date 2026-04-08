@@ -1,0 +1,12 @@
+label,metric,value
+trisomy21,n_embryos,96.0
+trisomy21,prevalence,0.17708333333333334
+trisomy21,closure_fraction,0.041666666666666664
+trisomy21,mean_closure_time,3.4839583333333337
+trisomy21,mean_gap,0.571727110558299
+trisomy21,std_gap,0.7734116118101074
+trisomy21,mean_linear_score,0.779604991439791
+trisomy21,mean_nonlinear_score,0.6667212230723195
+trisomy21,mean_probability,0.33739447162071623
+trisomy21,mean_terminal_shear,1.1402945785059526
+trisomy21,mean_peak_shear,1.1656925597289867

@@ -34,6 +34,10 @@ struct ResearchRunConfig
     calibration_targets_path::String
     population_size::Int
     calibration_candidates::Int
+    proposal_scale::Float64
+    prior_mix::Float64
+    refinement_rounds::Int
+    refinement_candidates::Int
     validation_replicates::Int
     n_chains::Int
     burn_in::Int
@@ -262,6 +266,10 @@ function load_research_run_config(path::AbstractString = joinpath(project_root()
         _resolve_project_path(string(get(run, "calibration_targets_path", joinpath("data", "calibration_targets.csv")))),
         Int(get(run, "population_size", 96)),
         Int(get(run, "calibration_candidates", 24)),
+        float(get(run, "proposal_scale", 0.20)),
+        float(get(run, "prior_mix", 0.15)),
+        Int(get(run, "refinement_rounds", 0)),
+        Int(get(run, "refinement_candidates", max(cld(Int(get(run, "calibration_candidates", 24)), 2), 1))),
         Int(get(run, "validation_replicates", 5)),
         Int(get(run, "n_chains", 4)),
         Int(get(run, "burn_in", 8)),
@@ -274,4 +282,3 @@ function load_research_run_config(path::AbstractString = joinpath(project_root()
         trace_parameters,
     )
 end
-

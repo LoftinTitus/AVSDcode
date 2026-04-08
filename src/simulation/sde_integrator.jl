@@ -32,6 +32,7 @@ function stochastic_heun(
             x.xE + drift_now.xE * dt + diffusion_now.xE * dW[4],
             x.xA + drift_now.xA * dt + diffusion_now.xA * dW[5],
         )
+        predictor = bounded_transformed_state(predictor)
 
         state_predictor = physical_state(predictor)
         drift_predictor = transformed_drift(state_predictor, times[i], params)
@@ -44,6 +45,7 @@ function stochastic_heun(
             x.xE + 0.5 * (drift_now.xE + drift_predictor.xE) * dt + 0.5 * (diffusion_now.xE + diffusion_predictor.xE) * dW[4],
             x.xA + 0.5 * (drift_now.xA + drift_predictor.xA) * dt + 0.5 * (diffusion_now.xA + diffusion_predictor.xA) * dW[5],
         )
+        x = bounded_transformed_state(x)
 
         states[i] = physical_state(x)
     end
@@ -79,6 +81,7 @@ function euler_maruyama(
             x.xE + mu.xE * dt + sigma.xE * sqrt_dt * noise[4],
             x.xA + mu.xA * dt + sigma.xA * sqrt_dt * noise[5],
         )
+        x = bounded_transformed_state(x)
 
         states[i] = physical_state(x)
     end

@@ -330,6 +330,10 @@ function generate_results_bundle(
     sensitivity_parameters::AbstractVector{Symbol} = collect(parameter_names),
     population_size::Integer = 96,
     calibration_candidates::Integer = 24,
+    proposal_scale::Real = 0.20,
+    prior_mix::Real = 0.15,
+    refinement_rounds::Integer = 0,
+    refinement_candidates::Integer = max(cld(Int(calibration_candidates), 2), 1),
     validation_replicates::Integer = 5,
     trisomy_fraction::Real = 0.25,
     solver::Symbol = :stochastic_heun,
@@ -352,6 +356,11 @@ function generate_results_bundle(
             seed = seed,
             initial_state = initial_state,
             solver = solver,
+            sample_strategy = sample_strategy,
+            proposal_scale = proposal_scale,
+            prior_mix = prior_mix,
+            refinement_rounds = refinement_rounds,
+            refinement_candidates = refinement_candidates,
         ) :
         run_calibration_chains(
             params = params,
@@ -363,6 +372,11 @@ function generate_results_bundle(
             initial_state = initial_state,
             solver = solver,
             n_chains = n_chains,
+            sample_strategy = sample_strategy,
+            proposal_scale = proposal_scale,
+            prior_mix = prior_mix,
+            refinement_rounds = refinement_rounds,
+            refinement_candidates = refinement_candidates,
         )
 
     fit = calibration isa MultiChainCalibration ? calibration.chains[calibration.best_chain_index] : calibration
@@ -376,6 +390,7 @@ function generate_results_bundle(
         seed = seed + 1_000,
         initial_state = initial_state,
         solver = solver,
+        sample_strategy = sample_strategy,
     )
     sensitivity = global_sensitivity(
         sensitivity_parameters;
@@ -385,6 +400,7 @@ function generate_results_bundle(
         seed = seed + 2_000,
         initial_state = initial_state,
         solver = solver,
+        sample_strategy = sample_strategy,
     )
 
     mixed_results = simulate_population(
@@ -487,6 +503,10 @@ function generate_results_bundle(
         write(io, "sample_strategy=$(sample_strategy)\n")
         write(io, "population_size=$(population_size)\n")
         write(io, "calibration_candidates=$(calibration_candidates)\n")
+        write(io, "proposal_scale=$(proposal_scale)\n")
+        write(io, "prior_mix=$(prior_mix)\n")
+        write(io, "refinement_rounds=$(refinement_rounds)\n")
+        write(io, "refinement_candidates=$(refinement_candidates)\n")
         write(io, "validation_replicates=$(validation_replicates)\n")
         write(io, "n_chains=$(n_chains)\n")
         write(io, "trisomy_fraction=$(trisomy_fraction)\n")
@@ -513,6 +533,10 @@ function run_research_pipeline(
         sensitivity_parameters = config.sensitivity_parameters,
         population_size = config.population_size,
         calibration_candidates = config.calibration_candidates,
+        proposal_scale = config.proposal_scale,
+        prior_mix = config.prior_mix,
+        refinement_rounds = config.refinement_rounds,
+        refinement_candidates = config.refinement_candidates,
         validation_replicates = config.validation_replicates,
         trisomy_fraction = config.trisomy_fraction,
         solver = config.solver,

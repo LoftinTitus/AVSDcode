@@ -1,3 +1,14 @@
+struct EmbryoScenario{T<:Real}
+    seed::Int
+    trisomy21::Bool
+    genotype::GenotypeSample{T}
+end
+
+struct CalibrationPanel{T<:Real}
+    euploid::Vector{EmbryoScenario{T}}
+    trisomy21::Vector{EmbryoScenario{T}}
+end
+
 function _population_assignment(
     rng::AbstractRNG,
     n_embryos::Integer,
@@ -42,17 +53,15 @@ function _latin_hypercube_latent_axes(
     return axes
 end
 
-function simulate_population(
+function build_population_panel(
     n_embryos::Integer;
     params::ModelParameters{T} = default_parameters(),
-    initial_state::PhysicalState{T} = default_initial_state(),
     seed::Integer = 42,
     trisomy_fraction::Real = 0.0,
-    solver::Symbol = :stochastic_heun,
     sample_strategy::Symbol = :stratified,
 ) where {T<:Real}
     rng = MersenneTwister(seed)
-    results = Vector{EmbryoResult{T}}(undef, n_embryos)
+    scenarios = Vector{EmbryoScenario{T}}(undef, n_embryos)
     trisomy_assignments = _population_assignment(rng, n_embryos, trisomy_fraction, sample_strategy)
 
     latent_samples = if sample_strategy == :stratified
@@ -70,18 +79,89 @@ function simulate_population(
                 latent_axes = vec(latent_samples[idx, :]),
             )
         else
-            nothing
+            sample_genotype(
+                rng,
+                params.genetics;
+                trisomy21 = trisomy_assignments[idx],
+            )
         end
 
+        scenarios[idx] = EmbryoScenario{T}(
+            rand(rng, 1:typemax(Int)),
+            trisomy_assignments[idx],
+            genotype,
+        )
+    end
+
+    return scenarios
+end
+
+function build_calibration_panel(
+    n_embryos::Integer;
+    params::ModelParameters{T} = default_parameters(),
+    seed::Integer = 42,
+    sample_strategy::Symbol = :stratified,
+) where {T<:Real}
+    return CalibrationPanel(
+        build_population_panel(
+            n_embryos;
+            params = params,
+            seed = seed,
+            trisomy_fraction = 0.0,
+            sample_strategy = sample_strategy,
+        ),
+        build_population_panel(
+            n_embryos;
+            params = params,
+            seed = seed + 10_000,
+            trisomy_fraction = 1.0,
+            sample_strategy = sample_strategy,
+        ),
+    )
+end
+
+function simulate_population(
+    scenarios::AbstractVector{<:EmbryoScenario{T}};
+    params::ModelParameters{T} = default_parameters(),
+    initial_state::PhysicalState{T} = default_initial_state(),
+    solver::Symbol = :stochastic_heun,
+) where {T<:Real}
+    results = Vector{EmbryoResult{T}}(undef, length(scenarios))
+
+    for (idx, scenario) in enumerate(scenarios)
         results[idx] = solve_embryo(
-            rng;
+            MersenneTwister(scenario.seed);
             params = params,
             initial_state = initial_state,
-            trisomy21 = trisomy_assignments[idx],
-            genotype = genotype,
+            trisomy21 = scenario.trisomy21,
+            genotype = scenario.genotype,
             solver = solver,
         )
     end
 
     return results
+end
+
+function simulate_population(
+    n_embryos::Integer;
+    params::ModelParameters{T} = default_parameters(),
+    initial_state::PhysicalState{T} = default_initial_state(),
+    seed::Integer = 42,
+    trisomy_fraction::Real = 0.0,
+    solver::Symbol = :stochastic_heun,
+    sample_strategy::Symbol = :stratified,
+) where {T<:Real}
+    scenarios = build_population_panel(
+        n_embryos;
+        params = params,
+        seed = seed,
+        trisomy_fraction = trisomy_fraction,
+        sample_strategy = sample_strategy,
+    )
+    return simulate_population(
+        scenarios;
+        params = params,
+        initial_state = initial_state,
+        solver = solver,
+    )
 end

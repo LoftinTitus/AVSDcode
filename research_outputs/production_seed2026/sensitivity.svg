@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420">
+<rect x="0" y="0" width="900" height="420" fill="#ffffff"/>
+<text x="450" y="24" text-anchor="middle" font-family="monospace" font-size="18">Sensitivity Ranking</text>
+<text x="170.0" y="58.0" text-anchor="end" font-family="monospace" font-size="12">k_G</text>
+<rect x="180.0" y="40.0" width="680.0" height="28.0" fill="#4c9f70"/>
+<text x="868.0" y="58.0" font-family="monospace" font-size="12">6.5685</text>
+<text x="170.0" y="102.0" text-anchor="end" font-family="monospace" font-size="12">alpha_EMT</text>
+<rect x="180.0" y="84.0" width="358.7999928314809" height="28.0" fill="#4c9f70"/>
+<text x="546.799992831481" y="102.0" font-family="monospace" font-size="12">3.4659</text>
+<text x="170.0" y="146.0" text-anchor="end" font-family="monospace" font-size="12">k_A</text>
+<rect x="180.0" y="128.0" width="275.84506755233656" height="28.0" fill="#4c9f70"/>
+<text x="463.84506755233656" y="146.0" font-family="monospace" font-size="12">2.6646</text>
+<text x="170.0" y="190.0" text-anchor="end" font-family="monospace" font-size="12">alpha_DMP</text>
+<rect x="180.0" y="172.0" width="267.64298416248914" height="28.0" fill="#4c9f70"/>
+<text x="455.64298416248914" y="190.0" font-family="monospace" font-size="12">2.5853</text>
+<text x="170.0" y="234.0" text-anchor="end" font-family="monospace" font-size="12">k_E</text>
+<rect x="180.0" y="216.0" width="7.693765409314437" height="28.0" fill="#4c9f70"/>
+<text x="195.69376540931444" y="234.0" font-family="monospace" font-size="12">0.0743</text>
+</svg>

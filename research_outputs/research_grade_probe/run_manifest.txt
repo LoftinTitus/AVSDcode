@@ -1,0 +1,14 @@
+seed=2026
+solver=stochastic_heun
+sample_strategy=stratified
+population_size=96
+calibration_candidates=96
+proposal_scale=0.08
+prior_mix=0.03
+refinement_rounds=4
+refinement_candidates=32
+validation_replicates=5
+n_chains=4
+trisomy_fraction=0.25
+burn_in=64
+parameter_names=alpha_EMT,alpha_DMP,k_G,k_E,k_A,threshold
