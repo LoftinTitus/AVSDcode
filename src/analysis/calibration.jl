@@ -59,11 +59,11 @@ function default_calibration_targets(; T::Type{<:Real} = Float64)
     )
 
     return CalibrationTargets(
-        (T(0.00), T(0.05)),
+        (T(0.00), T(0.08)),
         (T(0.15), T(0.33)),
-        (T(1.5), T(3.2)),
+        (T(1.5), T(3.6)),
         (T(0.5), T(4.0)),
-        T(0.35),
+        T(0.42),
         weights,
     )
 end
@@ -117,8 +117,8 @@ function evaluate_calibration(
             _range_penalty(trisomy21_summary[:mean_terminal_shear], targets.shear_range)
         )),
         :gap => T(0.5 * (
-            _upper_penalty(euploid_summary[:mean_gap], targets.max_gap) +
-            _upper_penalty(trisomy21_summary[:mean_gap], targets.max_gap)
+            _upper_penalty(euploid_summary[:median_gap], targets.max_gap) +
+            _upper_penalty(trisomy21_summary[:median_gap], targets.max_gap)
         )),
     )
 
@@ -290,6 +290,55 @@ function sample_parameter_candidate(
     return _with_parameter_values(params, candidate_values)
 end
 
+function _multi_panel_eval(
+    params::ModelParameters{T},
+    targets::CalibrationTargets{T},
+    n_embryos::Integer,
+    base_seed::Integer,
+    initial_state::PhysicalState{T},
+    solver::Symbol,
+    sample_strategy::Symbol,
+    n_reps::Integer,
+) where {T<:Real}
+    n_reps == 1 && return calibration_summary(
+        params;
+        targets = targets,
+        n_embryos = n_embryos,
+        seed = base_seed,
+        initial_state = initial_state,
+        solver = solver,
+        sample_strategy = sample_strategy,
+    )
+
+    evals = Vector{CalibrationEvaluation{T}}(undef, n_reps)
+    for rep in 1:n_reps
+        panel_seed = base_seed + rep * 10_007
+        panel = build_calibration_panel(
+            n_embryos;
+            params = params,
+            seed = panel_seed,
+            sample_strategy = sample_strategy,
+        )
+        evals[rep] = calibration_summary(
+            params;
+            targets = targets,
+            n_embryos = n_embryos,
+            seed = panel_seed,
+            initial_state = initial_state,
+            solver = solver,
+            sample_strategy = sample_strategy,
+            calibration_panel = panel,
+        )
+    end
+
+    penalty_keys = collect(keys(evals[1].penalties))
+    avg_penalties = Dict(k => T(mean(e.penalties[k] for e in evals)) for k in penalty_keys)
+    avg_score = T(mean(e.score for e in evals))
+    avg_euploid = _mean_summary_dict([e.euploid_summary for e in evals])
+    avg_trisomy21 = _mean_summary_dict([e.trisomy21_summary for e in evals])
+    return CalibrationEvaluation(avg_score, avg_penalties, avg_euploid, avg_trisomy21)
+end
+
 function fit_parameters(
     ;
     params::ModelParameters{T} = default_parameters(),
@@ -308,31 +357,19 @@ function fit_parameters(
     refinement_candidates::Integer = max(cld(Int(n_candidates), 2), 1),
     refinement_scale_factor::Real = 0.5,
     penalty_scale::Real = 1.0,
+    n_calibration_reps::Integer = 1,
 ) where {T<:Real}
     targets = isnothing(targets) ? default_calibration_targets(; T = T) : targets
     parameter_names = isnothing(parameter_names) ? collect(keys(params.rates)) : collect(parameter_names)
     initial_state = isnothing(initial_state) ? default_initial_state() : initial_state
-    calibration_panel = build_calibration_panel(
-        n_embryos;
-        params = params,
-        seed = seed,
-        sample_strategy = sample_strategy,
-    )
 
     rng = MersenneTwister(seed)
     history = Vector{Dict{Symbol,Any}}()
 
     current_values = _parameter_value_dict(params, parameter_names)
     current_params = _with_parameter_values(params, current_values)
-    current_eval = calibration_summary(
-        current_params;
-        targets = targets,
-        n_embryos = n_embryos,
-        seed = seed,
-        initial_state = initial_state,
-        solver = solver,
-        sample_strategy = sample_strategy,
-        calibration_panel = calibration_panel,
+    current_eval = _multi_panel_eval(
+        current_params, targets, n_embryos, seed, initial_state, solver, sample_strategy, Int(n_calibration_reps),
     )
     current_log_prior = _log_prior_density(current_values, params, parameter_names, priors)
     current_log_posterior = _log_posterior(current_eval, current_log_prior; penalty_scale = penalty_scale)
@@ -378,15 +415,9 @@ function fit_parameters(
             end
 
             proposed_params = _with_parameter_values(params, proposed_values)
-            proposed_eval = calibration_summary(
-                proposed_params;
-                targets = targets,
-                n_embryos = n_embryos,
-                seed = seed + iteration,
-                initial_state = initial_state,
-                solver = solver,
-                sample_strategy = sample_strategy,
-                calibration_panel = calibration_panel,
+            proposed_eval = _multi_panel_eval(
+                proposed_params, targets, n_embryos, seed + iteration,
+                initial_state, solver, sample_strategy, Int(n_calibration_reps),
             )
             proposed_log_prior = _log_prior_density(proposed_values, params, parameter_names, priors)
             proposed_log_posterior = _log_posterior(proposed_eval, proposed_log_prior; penalty_scale = penalty_scale)

@@ -1,0 +1,4 @@
+Running production research pipeline for seeds: 2026, 3026, 4026
+Seed 2026: /Users/tyloftin/Documents/Programming/AVSDcode/research_outputs/production_seed2026/report.md
+Seed 3026: /Users/tyloftin/Documents/Programming/AVSDcode/research_outputs/production_seed3026/report.md
+Seed 4026: /Users/tyloftin/Documents/Programming/AVSDcode/research_outputs/production_seed4026/report.md

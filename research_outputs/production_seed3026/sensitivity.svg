@@ -3,17 +3,17 @@
 <text x="450" y="24" text-anchor="middle" font-family="monospace" font-size="18">Sensitivity Ranking</text>
 <text x="170.0" y="58.0" text-anchor="end" font-family="monospace" font-size="12">alpha_EMT</text>
 <rect x="180.0" y="40.0" width="680.0" height="28.0" fill="#4c9f70"/>
-<text x="868.0" y="58.0" font-family="monospace" font-size="12">12.0281</text>
+<text x="868.0" y="58.0" font-family="monospace" font-size="12">5.4332</text>
 <text x="170.0" y="102.0" text-anchor="end" font-family="monospace" font-size="12">alpha_DMP</text>
-<rect x="180.0" y="84.0" width="539.8882230231646" height="28.0" fill="#4c9f70"/>
-<text x="727.8882230231646" y="102.0" font-family="monospace" font-size="12">9.5497</text>
+<rect x="180.0" y="84.0" width="679.5795652939669" height="28.0" fill="#4c9f70"/>
+<text x="867.5795652939669" y="102.0" font-family="monospace" font-size="12">5.4299</text>
 <text x="170.0" y="146.0" text-anchor="end" font-family="monospace" font-size="12">k_A</text>
-<rect x="180.0" y="128.0" width="294.04693435370484" height="28.0" fill="#4c9f70"/>
-<text x="482.04693435370484" y="146.0" font-family="monospace" font-size="12">5.2012</text>
+<rect x="180.0" y="128.0" width="256.52267372723605" height="28.0" fill="#4c9f70"/>
+<text x="444.52267372723605" y="146.0" font-family="monospace" font-size="12">2.0496</text>
 <text x="170.0" y="190.0" text-anchor="end" font-family="monospace" font-size="12">k_G</text>
-<rect x="180.0" y="172.0" width="119.67847908766458" height="28.0" fill="#4c9f70"/>
-<text x="307.6784790876646" y="190.0" font-family="monospace" font-size="12">2.1169</text>
+<rect x="180.0" y="172.0" width="39.02018656451366" height="28.0" fill="#4c9f70"/>
+<text x="227.02018656451366" y="190.0" font-family="monospace" font-size="12">0.3118</text>
 <text x="170.0" y="234.0" text-anchor="end" font-family="monospace" font-size="12">k_E</text>
-<rect x="180.0" y="216.0" width="16.023879876740843" height="28.0" fill="#4c9f70"/>
-<text x="204.02387987674084" y="234.0" font-family="monospace" font-size="12">0.2834</text>
+<rect x="180.0" y="216.0" width="10.464060073067511" height="28.0" fill="#4c9f70"/>
+<text x="198.46406007306751" y="234.0" font-family="monospace" font-size="12">0.0836</text>
 </svg>

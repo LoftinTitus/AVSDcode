@@ -28,6 +28,7 @@ for seed in PRODUCTION_SEEDS
         base_config.parameter_names,
         base_config.sensitivity_parameters,
         base_config.trace_parameters,
+        base_config.n_calibration_reps,
     )
 
     paths = run_research_pipeline(config)

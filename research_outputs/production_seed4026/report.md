@@ -4,29 +4,30 @@
 
 ```text
 n_embryos            : 96.0
-prevalence           : 0.125
-closure_fraction     : 0.125
-mean_closure_time    : 3.4696
-mean_gap             : 0.509
-std_gap              : 0.7678
-mean_linear_score    : 0.8328
-mean_nonlinear_score : 0.7151
-mean_probability     : 0.2725
-mean_terminal_shear  : 1.2566
-mean_peak_shear      : 1.2822
+prevalence           : 0.1667
+closure_fraction     : 0.25
+mean_closure_time    : 3.3923
+mean_gap             : 1.2615
+median_gap           : 0.3733
+std_gap              : 2.4284
+mean_linear_score    : 0.8449
+mean_nonlinear_score : 0.7378
+mean_probability     : 0.2931
+mean_terminal_shear  : 1.2105
+mean_peak_shear      : 1.4813
 ```
 
 # Calibration
 
 ## Objective
 
-Score: 0.5079
+Score: 0.0004
 
 ## Penalties
 
-- `closure_time`: 0.0074
+- `closure_time`: 0.0
 - `euploid_prevalence`: 0.0
-- `gap`: 0.3312
+- `gap`: 0.0002
 - `terminal_shear`: 0.0
 - `trisomy21_prevalence`: 0.0
 
@@ -34,104 +35,106 @@ Score: 0.5079
 
 ```text
 n_embryos            : 96.0
-prevalence           : 0.0417
-closure_fraction     : 0.0938
-mean_closure_time    : 3.4643
-mean_gap             : 0.5748
-std_gap              : 1.0942
-mean_linear_score    : 0.8472
-mean_nonlinear_score : 0.7204
-mean_probability     : 0.2403
-mean_terminal_shear  : 1.2555
-mean_peak_shear      : 1.307
+prevalence           : 0.0677
+closure_fraction     : 0.3125
+mean_closure_time    : 3.3602
+mean_gap             : 1.3538
+median_gap           : 0.3557
+std_gap              : 2.617
+mean_linear_score    : 0.8568
+mean_nonlinear_score : 0.7493
+mean_probability     : 0.268
+mean_terminal_shear  : 1.2676
+mean_peak_shear      : 1.5715
 ```
 
 ## Trisomy 21 Summary
 
 ```text
 n_embryos            : 96.0
-prevalence           : 0.2604
-closure_fraction     : 0.0417
-mean_closure_time    : 3.4858
-mean_gap             : 0.525
-std_gap              : 0.1608
-mean_linear_score    : 0.7599
-mean_nonlinear_score : 0.6494
-mean_probability     : 0.3701
-mean_terminal_shear  : 1.0983
-mean_peak_shear      : 1.1144
+prevalence           : 0.2396
+closure_fraction     : 0.1354
+mean_closure_time    : 3.4394
+mean_gap             : 0.8331
+median_gap           : 0.4265
+std_gap              : 1.7051
+mean_linear_score    : 0.7936
+mean_nonlinear_score : 0.6899
+mean_probability     : 0.3622
+mean_terminal_shear  : 1.2338
+mean_peak_shear      : 1.3586
 ```
 
 
 # Posterior Summary
 
-Acceptance rate: 0.625
-Mean score: 1.4041
-MAP score: 0.5079
-MAP log posterior: 10.4177
-Retained samples: 1028
-Burn-in: 128
-Max R-hat: 1.3589
+Acceptance rate: 0.51
+Mean score: 0.5258
+MAP score: 0.0004
+MAP log posterior: 11.2466
+Retained samples: 3804
+Burn-in: 250
+Max R-hat: 1.0546
 
 ## Posterior Means and Intervals
 
-- `alpha_DMP`: 0.618 [0.4235, 0.7809] (R-hat 1.0484)
-- `alpha_EMT`: 0.8004 [0.5825, 1.0266] (R-hat 1.068)
-- `k_A`: 0.6437 [0.5305, 0.8497] (R-hat 1.3589)
-- `k_E`: 0.7484 [0.548, 0.9081] (R-hat 1.0503)
-- `k_G`: 0.8217 [0.6868, 0.936] (R-hat 1.1144)
-- `threshold`: 0.6525 [0.5791, 0.7223] (R-hat 1.095)
+- `alpha_DMP`: 0.6246 [0.4345, 0.8795] (R-hat 1.0055)
+- `alpha_EMT`: 0.8218 [0.5994, 1.0947] (R-hat 1.0067)
+- `k_A`: 0.7037 [0.5072, 0.9246] (R-hat 1.0456)
+- `k_E`: 0.7065 [0.4966, 0.9537] (R-hat 1.0367)
+- `k_G`: 0.9343 [0.6684, 1.2072] (R-hat 1.0546)
+- `threshold`: 0.6847 [0.5899, 0.7717] (R-hat 1.0013)
 
 ## MAP Parameters
 
-- `alpha_DMP`: 0.6306
-- `alpha_EMT`: 0.7618
-- `k_A`: 0.6865
-- `k_E`: 0.7169
-- `k_G`: 0.805
-- `threshold`: 0.6799
+- `alpha_DMP`: 0.6082
+- `alpha_EMT`: 0.7981
+- `k_A`: 0.6898
+- `k_E`: 0.7196
+- `k_G`: 0.9512
+- `threshold`: 0.7066
 
 
 # Validation
 
-Mean score: 3.1163
+Mean score: 0.9389
 
 ## Replicate Scores
 
-- replicate 1: 1.5557
-- replicate 2: 3.8196
-- replicate 3: 0.8449
-- replicate 4: 8.2195
-- replicate 5: 1.1034
-- replicate 6: 1.8599
-- replicate 7: 7.0987
-- replicate 8: 0.429
+- replicate 1: 0.0052
+- replicate 2: 0.9492
+- replicate 3: 0.0083
+- replicate 4: 2.7274
+- replicate 5: 0.2926
+- replicate 6: 0.0041
+- replicate 7: 3.5208
+- replicate 8: 0.0039
 
 ## Pass Rates
 
-- `closure_time`: 0.0
+- `closure_time`: 1.0
 - `euploid_prevalence`: 0.25
-- `gap`: 0.0
+- `gap`: 0.375
 - `terminal_shear`: 1.0
-- `trisomy21_prevalence`: 0.875
+- `trisomy21_prevalence`: 1.0
 
 ## Mean Penalties
 
-- `closure_time`: 0.0072
-- `euploid_prevalence`: 0.6925
-- `gap`: 0.6822
+- `closure_time`: 0.0
+- `euploid_prevalence`: 0.3116
+- `gap`: 0.0027
 - `terminal_shear`: 0.0
-- `trisomy21_prevalence`: 0.0012
+- `trisomy21_prevalence`: 0.0
 
 
 ## Sensitivity
 
-Baseline score: 1.5557
+Baseline score: 0.0052
 
 ### Local Effects
 
-- `k_G`: 19.1933
-- `k_A`: 8.9151
-- `alpha_DMP`: -8.455
-- `alpha_EMT`: 6.9731
-- `k_E`: 2.4805
+- `alpha_DMP`: -4.609
+- `k_A`: -4.0637
+- `alpha_EMT`: -2.8161
+- `k_G`: -0.0356
+- `k_E`: 0.0

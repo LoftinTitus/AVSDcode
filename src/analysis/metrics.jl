@@ -40,6 +40,7 @@ function summary_metrics(results::AbstractVector{<:EmbryoResult}; gap_threshold:
         :n_embryos => Float64(length(results)),
         :prevalence => Float64(prevalence(results)),
         :mean_gap => Float64(mean(gaps)),
+        :median_gap => Float64(median(gaps)),
         :std_gap => Float64(length(gaps) > 1 ? std(gaps) : 0.0),
         :mean_linear_score => Float64(mean(linear_scores)),
         :mean_nonlinear_score => Float64(mean(nonlinear_scores)),

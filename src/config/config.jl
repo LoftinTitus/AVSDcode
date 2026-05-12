@@ -48,6 +48,7 @@ struct ResearchRunConfig
     parameter_names::Vector{Symbol}
     sensitivity_parameters::Vector{Symbol}
     trace_parameters::Vector{Symbol}
+    n_calibration_reps::Int
 end
 
 function load_yaml_like(path::AbstractString)
@@ -280,5 +281,6 @@ function load_research_run_config(path::AbstractString = joinpath(project_root()
         parameter_names,
         sensitivity_parameters,
         trace_parameters,
+        Int(get(run, "n_calibration_reps", 1)),
     )
 end

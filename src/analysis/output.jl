@@ -9,6 +9,7 @@ function _summary_key_order(summary::Dict{Symbol,Float64})
         :closure_fraction,
         :mean_closure_time,
         :mean_gap,
+        :median_gap,
         :std_gap,
         :mean_linear_score,
         :mean_nonlinear_score,
@@ -342,6 +343,7 @@ function generate_results_bundle(
     n_chains::Integer = 4,
     trace_parameters::AbstractVector{Symbol} = Symbol[],
     seed::Integer = 2026,
+    n_calibration_reps::Integer = 1,
 ) where {T<:Real}
     targets = isnothing(targets) ? default_calibration_targets(; T = T) : targets
     mkpath(output_dir)
@@ -361,6 +363,7 @@ function generate_results_bundle(
             prior_mix = prior_mix,
             refinement_rounds = refinement_rounds,
             refinement_candidates = refinement_candidates,
+            n_calibration_reps = n_calibration_reps,
         ) :
         run_calibration_chains(
             params = params,
@@ -377,6 +380,7 @@ function generate_results_bundle(
             prior_mix = prior_mix,
             refinement_rounds = refinement_rounds,
             refinement_candidates = refinement_candidates,
+            n_calibration_reps = n_calibration_reps,
         )
 
     fit = calibration isa MultiChainCalibration ? calibration.chains[calibration.best_chain_index] : calibration
@@ -511,6 +515,7 @@ function generate_results_bundle(
         write(io, "n_chains=$(n_chains)\n")
         write(io, "trisomy_fraction=$(trisomy_fraction)\n")
         write(io, "burn_in=$(burn_in)\n")
+        write(io, "n_calibration_reps=$(n_calibration_reps)\n")
         write(io, "parameter_names=$(join(string.(parameter_names), ','))\n")
     end
     paths[:run_manifest] = joinpath(output_dir, "run_manifest.txt")
@@ -545,6 +550,7 @@ function run_research_pipeline(
         n_chains = config.n_chains,
         trace_parameters = config.trace_parameters,
         seed = config.seed,
+        n_calibration_reps = config.n_calibration_reps,
     )
 end
 
